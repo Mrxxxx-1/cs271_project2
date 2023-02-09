@@ -3,12 +3,15 @@ import threading, time
 from sys import exit
 import json
 import random
+from token_prob import random_unit
 
 print("client")
 
 usertable = {'A' : 10882, 'B' : 10884, 'C' : 10886, 'D' : 10888, 'E' : 10900} 
 user = { ('192.168.0.167', 10882) : 'A', ('192.168.0.167', 10884) : 'B', ('192.168.0.167', 10886) : 'C', ('192.168.0.167', 10888) : 'D', ('192.168.0.167', 10900) : 'E'}
 outgoingchannel = {'A' : ['B'], 'B' : ['A', 'D'], 'C' : ['B'], 'D' : ['A', 'B', 'C', 'E'], 'E' : ['B', 'D']}
+snapshot = {'A' : {'Token' : False, 'B' : None, 'D' : None}, 'B' : {'Token' : False, 'A' : None, 'C' : None, 'D' : None, 'E' : None}, 'C' : {'Token' : False, 'D' : None}, 'D' : {'Token' : False, 'B' : None,'E' : None}, 'E' : {'Token' : False, 'D' : None}}
+incomingchannel = {'A' : 0, 'B' : 0, 'C' : 0, 'D' : 0, 'E' : 0}
 s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
 while True :
@@ -26,7 +29,7 @@ s.bind((HOST, PORT))
 # time.sleep(3)
 
 g_token = False
-g_probability = 1
+g_probability = 0
 g_tflag = 0
 
 flag = True
@@ -37,15 +40,19 @@ def RECV():
     global g_probability
     while flag:
       (data, addr) = s.recvfrom(1024)
+      time.sleep(3)
       if data.decode('utf-8') == "Token" :
-        g_token = True
-        print('received token from client %s' %(user[addr]))
-        time.sleep(1)
-        t = random.randint(0, len(channel)-1)
-        print('Send token to client %s \n' %(channel[t]))
-        data = 'Token'
-        g_token = False
-        s.sendto(data.encode('utf-8'), (HOST, usertable[channel[t]]))
+        if(random_unit(g_probability/100)) :
+            g_token = True
+            print('received token from client %s' %(user[addr]))
+            time.sleep(1)
+            t = random.randint(0, len(channel)-1)
+            print('Send token to client %s \n' %(channel[t]))
+            data = 'Token'
+            g_token = False
+            s.sendto(data.encode('utf-8'), (HOST, usertable[channel[t]]))
+        else :
+            g_token = False
 
     #   try :
     #     if isinstance(json.loads(data.decode('utf-8')), dict) :
@@ -121,6 +128,7 @@ def UI():
             g_probability = input('Please enter token loss probability\n')
             g_probability = float(g_probability)
             print('Now client has a %.1f %% chance of losing the token' %(g_probability))
+            
         time.sleep(1)
 # UI()
 
