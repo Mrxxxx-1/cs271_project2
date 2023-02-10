@@ -10,8 +10,8 @@ print("client")
 usertable = {'A' : 10882, 'B' : 10884, 'C' : 10886, 'D' : 10888, 'E' : 10900} 
 user = { ('192.168.0.167', 10882) : 'A', ('192.168.0.167', 10884) : 'B', ('192.168.0.167', 10886) : 'C', ('192.168.0.167', 10888) : 'D', ('192.168.0.167', 10900) : 'E'}
 outgoingchannel = {'A' : ['B'], 'B' : ['A', 'D'], 'C' : ['B'], 'D' : ['A', 'B', 'C', 'E'], 'E' : ['B', 'D']}
-snapshot = {'A' : {'Token' : False, 'B' : None, 'D' : None}, 'B' : {'Token' : False, 'A' : None, 'C' : None, 'D' : None, 'E' : None}, 'C' : {'Token' : False, 'D' : None}, 'D' : {'Token' : False, 'B' : None,'E' : None}, 'E' : {'Token' : False, 'D' : None}}
-# incomingchannel = {'A' : 0, 'B' : 0, 'C' : 0, 'D' : 0, 'E' : 0}
+snapshot = {'A' : {'Token' : False, 'B' : 'Empty', 'D' : 'Empty'}, 'B' : {'Token' : False, 'A' : 'Empty', 'C' : 'Empty', 'D' : 'Empty', 'E' : 'Empty'}, 'C' : {'Token' : False, 'D' : 'Empty'}, 'D' : {'Token' : False, 'B' : 'Empty','E' : 'Empty'}, 'E' : {'Token' : False, 'D' : 'Empty'}}
+incomingchannel = {'A' : 0, 'B' : 0, 'C' : 0, 'D' : 0, 'E' : 0}
 s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
 while True :
@@ -35,6 +35,7 @@ flag = True
 channel = outgoingchannel[username]
 lstatus = snapshot[username]
 channelnum = len(lstatus) - 1
+snapshot1 = snapshot
 
 # print(channel)
 # print(lstatus)
@@ -53,69 +54,66 @@ def RECV():
             if isinstance(json.loads(data.decode('utf-8')), dict) :
                 rev = {}
                 rev = json.loads(data.decode('utf-8'))
-                if rev.get('Token') :
+                if 'Token' in rev :
                     icount += 1
                     print('Received snapshot from client %s' %(user[addr]))
-                    snapshot[user[addr]] = rev
+                    snapshot1[user[addr]] = rev
                     if icount == 4 :
+                        snapshot1[username] = lstatus
                         print('Snapshot finished, show all status below:')
-                        print(snapshot)
+                        print(snapshot1)
                         icount = 0
                         g_marker = 0
                         count = 0
                 else :
                     if g_marker == 0 :
                         print('Received the first MARKER from client %s' %(user[addr]))
+                        incomingchannel[user[addr]] = 1
                         lstatus['Token'] = g_token
                         g_marker = 1
                         count += 1
                         for item in channel :
                             print('Send MAKER to client %s' %(item))
+                            time.sleep(1)
                             s.sendto(data, (HOST, usertable[item]))
-                        print(count)
-                        if count == (len(lstatus)-1) :
-                            # lstatus1 = json.dumps(lstatus)
-                            print('Send snapshot to initiator %s' %(rev['MAKER']))
-                            # s.sendto(lstatus1.encode('utf-8'), (HOST, usertable[rev['MAKER']]))
+                        # print(count)
+                        # if count == (len(lstatus)-1) :
+                        #     lstatus1 = json.dumps(lstatus)
+                        #     print('Send snapshot to initiator %s' %(rev['MAKER']))
+                        #     s.sendto(lstatus1.encode('utf-8'), (HOST, usertable[rev['MAKER']]))
                     else :
                         print('Received MARKER from client %s' %(user[addr]))
+                        incomingchannel[user[addr]] = 1
                         count += 1
-                        print(count)
-                        a = (count == (len(lstatus)-1))
-                        print(a)
-                        if a :
-                            # lstatus1 = json.dumps(lstatus)
-                            print('Send snapshot to initiator %s' %(rev['MAKER']))
-                            # s.sendto(lstatus1.encode('utf-8'), (HOST, usertable[rev['MAKER']]))
+                        # print(count)
+                        # a = (count == (len(lstatus)-1))
+                        # print(a)
+                        # # if a :
+                        # #     # lstatus1 = json.dumps(lstatus)
+                        # #     print('Send snapshot to initiator %s' %(rev['MAKER']))
+                        # #     # s.sendto(lstatus1.encode('utf-8'), (HOST, usertable[rev['MAKER']]))
+                if count == channelnum and rev['MARKER'] != username :
+                    lstatus1 = json.dumps(lstatus)
+                    print('Send snapshot to initiator %s' %(rev['MARKER']))
+                    time.sleep(1)
+                    s.sendto(lstatus1.encode('utf-8'), (HOST, usertable[rev['MARKER']]))
 
       except :
-        if g_marker == 1 :
-            if data.decode('utf-8') == "Token" :
-                if(random_unit(g_probability/100)) :
-                    g_token = True
-                    lstatus[user[addr]] = g_token
-                    print('received token from client %s' %(user[addr]))
-                    time.sleep(1)
-                    t = random.randint(0, len(channel)-1)
-                    print('Send token to client %s \n' %(channel[t]))
-                    data = 'Token'
-                    g_token = False
-                    s.sendto(data.encode('utf-8'), (HOST, usertable[channel[t]]))
-                else :
-                    g_token = False
-        else :
-            if data.decode('utf-8') == "Token" :
-                if(random_unit(g_probability/100)) :
-                    g_token = True
-                    print('received token from client %s' %(user[addr]))
-                    time.sleep(1)
-                    t = random.randint(0, len(channel)-1)
-                    print('Send token to client %s \n' %(channel[t]))
-                    data = 'Token'
-                    g_token = False
-                    s.sendto(data.encode('utf-8'), (HOST, usertable[channel[t]]))
-                else :
-                    g_token = False
+        if (g_marker == 1) and (incomingchannel[user[addr]] == 0) :
+            lstatus[user[addr]] = g_token
+        if data.decode('utf-8') == "Token" :
+            if(random_unit(g_probability/100)) :
+                g_token = True
+                print('received token from client %s' %(user[addr]))
+                time.sleep(2)
+                t = random.randint(0, len(channel)-1)
+                print('Send token to client %s \n' %(channel[t]))
+                data = 'Token'
+                g_token = False
+                time.sleep(1)
+                s.sendto(data.encode('utf-8'), (HOST, usertable[channel[t]]))
+            else :
+                g_token = False
 
 def UI():
     global g_token
@@ -135,17 +133,19 @@ def UI():
             print('Issue token to local client')
             g_tflag = 1
             g_token = True
-            time.sleep(1)
+            time.sleep(2)
             t = random.randint(0, len(channel)-1)
             print('Send token to client %s \n' %(channel[t]))
             data = 'Token'
             g_token = False
+            time.sleep(1)
             s.sendto(data.encode('utf-8'), (HOST, usertable[channel[t]]))
 
 
         elif a == "2" :
             print('Initiating a Snapshot')
-            snapshot[username]['Token'] = g_token
+            snapshot1 = snapshot
+            snapshot1[username]['Token'] = g_token
             # print(snapshot)
             data2 = {}
             data2['MARKER'] = username
@@ -153,6 +153,7 @@ def UI():
             g_marker = 1
             for item in channel :
                 print('Send MAKER to client %s' %(item))
+                time.sleep(1)
                 s.sendto(data22.encode('utf-8'), (HOST, usertable[item]))
 
 
