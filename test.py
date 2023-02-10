@@ -2,7 +2,7 @@
 Author: Mrx
 Date: 2023-02-09 11:06:11
 LastEditors: Mrx
-LastEditTime: 2023-02-09 20:53:30
+LastEditTime: 2023-02-09 22:16:19
 FilePath: \cs271_project2\test.py
 Description: 
 
@@ -12,12 +12,5 @@ snapshot = {'A' : {'Token' : False, 'B' : None, 'D' : None}, 'B' : {'Token' : Fa
 
 print(snapshot)
 
-count = 0
-count += 1
-count1 = 1
-
-if True :
-    print('True')
-
-print(count)
-print(count1)
+for item in snapshot :
+    print(item, ':', snapshot[item])

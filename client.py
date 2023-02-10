@@ -36,6 +36,7 @@ channel = outgoingchannel[username]
 lstatus = snapshot[username]
 channelnum = len(lstatus) - 1
 snapshot1 = snapshot
+incomingchannel1 = incomingchannel
 
 # print(channel)
 # print(lstatus)
@@ -45,6 +46,7 @@ def RECV():
     global g_token
     global g_probability
     global g_marker
+    global incomingchannel1
     count = 0
     icount = 0 
     while flag:
@@ -57,18 +59,21 @@ def RECV():
                 if 'Token' in rev :
                     icount += 1
                     print('Received snapshot from client %s' %(user[addr]))
+                    print(rev)
                     snapshot1[user[addr]] = rev
                     if icount == 4 :
                         snapshot1[username] = lstatus
                         print('Snapshot finished, show all status below:')
-                        print(snapshot1)
+                        for item in snapshot1 :
+                            print(item, ':', snapshot1[item])
                         icount = 0
                         g_marker = 0
                         count = 0
                 else :
                     if g_marker == 0 :
                         print('Received the first MARKER from client %s' %(user[addr]))
-                        incomingchannel[user[addr]] = 1
+                        incomingchannel1 = incomingchannel
+                        incomingchannel1[user[addr]] = 1
                         lstatus['Token'] = g_token
                         g_marker = 1
                         count += 1
@@ -83,7 +88,7 @@ def RECV():
                         #     s.sendto(lstatus1.encode('utf-8'), (HOST, usertable[rev['MAKER']]))
                     else :
                         print('Received MARKER from client %s' %(user[addr]))
-                        incomingchannel[user[addr]] = 1
+                        incomingchannel1[user[addr]] = 1
                         count += 1
                         # print(count)
                         # a = (count == (len(lstatus)-1))
@@ -97,11 +102,14 @@ def RECV():
                     print('Send snapshot to initiator %s' %(rev['MARKER']))
                     time.sleep(1)
                     s.sendto(lstatus1.encode('utf-8'), (HOST, usertable[rev['MARKER']]))
+                    icount = 0
+                    g_marker = 0
+                    count = 0
 
       except :
-        if (g_marker == 1) and (incomingchannel[user[addr]] == 0) :
-            lstatus[user[addr]] = g_token
         if data.decode('utf-8') == "Token" :
+            if (g_marker == 1) and (incomingchannel1[user[addr]] == 0) :
+                lstatus[user[addr]] = True
             if(random_unit(g_probability/100)) :
                 g_token = True
                 print('received token from client %s' %(user[addr]))
