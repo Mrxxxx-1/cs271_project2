@@ -32,7 +32,7 @@ g_marker = 0
 
 channel = outgoingchannel[username]
 lstatus = snapshot[username]
-print(lstatus)
+# print(lstatus)
 channelnum = len(lstatus) - 1
 snapshot1 = snapshot
 incomingchannel1 = incomingchannel
@@ -60,7 +60,7 @@ def RECV():
                 if 'Token' in rev :
                     icount += 1
                     print('Received snapshot from client %s' %(user[addr]))
-                    print(rev)
+                    # print(rev)
                     snapshot1[user[addr]] = rev
                     if icount == 4 :
                         snapshot1[username] = lstatus
@@ -78,8 +78,8 @@ def RECV():
                                 lstatus[item] = 'Empty'
                         for item in incomingchannel1 :
                             incomingchannel1[item] = 0
-                        print(lstatus)
-                        print(incomingchannel1)
+                        # print(lstatus)
+                        # print(incomingchannel1)
                 else :
                     if g_marker == 0 :
                         print('Received the first MARKER from client %s' %(user[addr]))
@@ -122,13 +122,13 @@ def RECV():
                             lstatus[item] = 'Empty'
                     for item in incomingchannel1 :
                         incomingchannel1[item] = 0
-                    print(lstatus)
-                    print(incomingchannel1)
+                    # print(lstatus)
+                    # print(incomingchannel1)
       except :
         if data.decode('utf-8') == "Token" :
-            if (g_marker == 1) and (incomingchannel1[user[addr]] == 0) :
-                lstatus[user[addr]] = True
             if(random_unit(g_probability/100)) :
+                if (g_marker == 1) and (incomingchannel1[user[addr]] == 0) :
+                    lstatus[user[addr]] = True
                 print('received token from client %s' %(user[addr]))
                 lock.acquire()
                 g_token = True
@@ -151,11 +151,11 @@ def UI():
     global g_token
     global g_probability
     global g_marker
+    print("1. Issue token")
+    print("2. Start snapshot")
+    print("3. Adjust token loss probability")
+    print("0. Exit application")
     while True :
-        print("1. Issue token")
-        print("2. Start snapshot")
-        print("3. Adjust token loss probability")
-        print("0. Exit application")
         a = input("please insert command\n")
         if a == "0" :
             flag = False
