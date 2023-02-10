@@ -23,8 +23,8 @@ def random_unit(p):
         return False
     else:
         return True
-for _ in range(10) :
-    print(random_unit(50/100))
+# for _ in range(10) :
+#     print(random_unit(50/100))
 
 # import random
 # def random_unit(p):
